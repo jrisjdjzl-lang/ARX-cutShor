@@ -158,3 +158,4 @@ def cleanup_temp_files(temp_dir: Path, max_age_seconds: float = 3600, max_total_
                 continue
 
     return deleted_count
+

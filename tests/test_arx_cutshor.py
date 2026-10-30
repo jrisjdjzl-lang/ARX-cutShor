@@ -670,3 +670,4 @@ def test_21_end_to_end_pipeline_and_web_api(temp_env, sample_videos):
     r_dash = client.get("/api/dashboard")
     assert r_dash.status_code == 200
     assert r_dash.json()["published_clips"] == 1
+

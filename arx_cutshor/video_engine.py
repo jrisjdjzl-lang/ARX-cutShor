@@ -736,3 +736,4 @@ class VideoEngine:
         if res.returncode != 0 or not out.exists():
             raise RuntimeError(f"Failed to generate synthetic test video: {res.stderr}")
         return out
+

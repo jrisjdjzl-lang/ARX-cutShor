@@ -52,3 +52,4 @@ jobs:
       - name: Clean up ephemeral credentials
         if: always()
         run: rm -rf credentials/
+

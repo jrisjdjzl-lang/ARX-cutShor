@@ -191,3 +191,4 @@ def create_app(config: Optional[AppConfig] = None, db: Optional[Database] = None
         return {"logs": logs}
 
     return app
+

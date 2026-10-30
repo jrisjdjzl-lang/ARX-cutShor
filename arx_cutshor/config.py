@@ -207,3 +207,4 @@ def load_config(base_dir: Optional[Path] = None) -> AppConfig:
         cfg = AppConfig()
     cfg.ensure_directories()
     return cfg
+

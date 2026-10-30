@@ -678,3 +678,4 @@ class Database:
 
 
 TupleResult = Any
+

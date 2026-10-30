@@ -76,3 +76,4 @@ class NotificationService:
                 return 200 <= resp.status < 300
         except Exception:
             return False
+

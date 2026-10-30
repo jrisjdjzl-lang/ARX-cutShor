@@ -220,3 +220,4 @@ class MetadataGenerator:
             part_number=part_number,
             total_parts=total_parts,
         )
+

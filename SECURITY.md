@@ -39,3 +39,4 @@
    rm -f credentials/gdrive_token.json credentials/youtube_token.json
    ```
 4. احذف الأسرار المقابلة من **GitHub Repository Secrets**.
+

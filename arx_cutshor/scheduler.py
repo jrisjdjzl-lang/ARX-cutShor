@@ -274,3 +274,4 @@ class SchedulerEngine:
         now_iso = now_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
         scheduled = self.db.list_publishing_jobs(status="scheduled")
         return [j for j in scheduled if j["scheduled_at"] <= now_iso]
+

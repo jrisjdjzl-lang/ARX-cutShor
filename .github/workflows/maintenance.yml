@@ -29,3 +29,4 @@ jobs:
 
       - name: Run maintenance and cleanup
         run: python -m arx_cutshor.cli maintenance --max-age 0
+

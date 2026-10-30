@@ -21,3 +21,4 @@ imageio-ffmpeg>=0.5.1
 
 # Testing
 pytest>=8.0.0
+

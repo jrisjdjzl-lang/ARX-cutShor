@@ -29,3 +29,4 @@ jobs:
 
       - name: Generate status report
         run: python -m arx_cutshor.cli report
+

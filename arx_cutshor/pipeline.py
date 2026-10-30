@@ -257,3 +257,4 @@ class PipelineOrchestrator:
         report_file.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
         report["report_path"] = str(report_file)
         return report
+

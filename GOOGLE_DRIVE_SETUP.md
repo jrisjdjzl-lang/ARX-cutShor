@@ -72,3 +72,4 @@ ARX-cutShor/
 ```
 
 سيتم حفظ الرمز في `credentials/gdrive_token.json`، ويمكنك بعدها تشغيل `discover` و `run-cycle` آلياً بالكامل.
+
