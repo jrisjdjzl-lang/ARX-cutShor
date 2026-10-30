@@ -152,11 +152,40 @@ def cmd_serve(args) -> int:
     return 0
 
 
+def cmd_auth(args) -> int:
+    cfg = load_config()
+    orch = PipelineOrchestrator(cfg)
+    target = args.service or "all"
+
+    if target in ("all", "drive"):
+        print("\n[Google Drive] بدء المصادقة... سيتم فتح المتصفح لمنح الإذن...")
+        try:
+            orch.gdrive.authenticate(interactive=True)
+            print("✅ [Google Drive] تمت المصادقة بنجاح وتم حفظ الرمز في credentials/gdrive_token.json")
+        except Exception as exc:
+            print(f"❌ [Google Drive] فشلت المصادقة: {exc}", file=sys.stderr)
+            return 1
+
+    if target in ("all", "youtube"):
+        print("\n[YouTube] بدء المصادقة... سيتم فتح المتصفح لمنح الإذن...")
+        try:
+            orch.youtube.authenticate(interactive=True)
+            print("✅ [YouTube] تمت المصادقة بنجاح وتم حفظ الرمز في credentials/youtube_token.json")
+        except Exception as exc:
+            print(f"❌ [YouTube] فشلت المصادقة: {exc}", file=sys.stderr)
+            return 1
+
+    return 0
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(prog="arx-cutshor", description="ARX-cutShor Automation CLI")
     sub = parser.add_subparsers(dest="command", required=True)
 
     sub.add_parser("audit", help="Validate environment, FFmpeg, database, and config")
+
+    p_auth = sub.add_parser("auth", help="Interactive OAuth 2.0 authentication for Google Drive and YouTube")
+    p_auth.add_argument("--service", default="all", choices=["all", "drive", "youtube"], help="Service to authenticate")
 
     p_disc = sub.add_parser("discover", help="Discover new videos from Google Drive")
     p_disc.add_argument("--folder-id", default="", help="Override Google Drive Input Folder ID")
@@ -187,6 +216,7 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
     dispatch = {
         "audit": cmd_audit,
+        "auth": cmd_auth,
         "discover": cmd_discover,
         "process": cmd_process,
         "schedule": cmd_schedule,
