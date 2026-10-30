@@ -37,6 +37,14 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Restore & persist SQLite state across runs
+        uses: actions/cache@v4
+        with:
+          path: data/db/
+          key: arx-sqlite-db-${{ github.run_id }}
+          restore-keys: |
+            arx-sqlite-db-
+
       - name: Provision OAuth tokens from GitHub Secrets
         env:
           GDRIVE_TOKEN_JSON: ${{ secrets.GDRIVE_TOKEN_JSON }}
@@ -61,6 +69,7 @@ jobs:
           GDRIVE_INPUT_FOLDER_ID: ${{ secrets.GDRIVE_INPUT_FOLDER_ID || '1PpqxWIN3cDRQ90nmT7bWIRKokJj_5vFf' }}
         run: |
           if [ -f "credentials/gdrive_token.json" ] && [ -f "credentials/youtube_token.json" ]; then
+            python -c "from pathlib import Path; from arx_cutshor.config import load_config; from arx_cutshor.database import Database; db = Database(load_config().database_path); tpl = db.get_template('default'); tpl.update({'logo_enabled': True, 'logo_path': 'channels4_profile.jpg', 'logo_position': 'top-left'}) if Path('channels4_profile.jpg').exists() else None; db.save_template('default', tpl)"
             python -m arx_cutshor.cli run-cycle --max-videos ${{ github.event.inputs.max_videos || '1' }}
           else
             echo "OAuth tokens not yet configured in GitHub Secrets; running safe dry-run cycle."
