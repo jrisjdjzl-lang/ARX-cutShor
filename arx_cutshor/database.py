@@ -14,6 +14,8 @@ from typing import Any, Dict, List, Optional
 
 from arx_cutshor.security import scrub_secrets
 
+TupleResult = Any
+
 
 def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")

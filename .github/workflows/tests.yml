@@ -42,5 +42,5 @@ jobs:
           PUBLISHING_MODE: "testing"
           ALLOW_PUBLIC_PUBLISHING: "false"
         run: |
-          pytest -v
+          python -m pytest -v
 

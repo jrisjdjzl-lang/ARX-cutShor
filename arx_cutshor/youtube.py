@@ -18,6 +18,8 @@ from typing import Any, Dict, List, Optional
 from arx_cutshor.database import Database
 from arx_cutshor.security import scrub_secrets
 
+TupleResult = Any
+
 YOUTUBE_SCOPES = [
     "https://www.googleapis.com/auth/youtube.upload",
     "https://www.googleapis.com/auth/youtube.readonly",
