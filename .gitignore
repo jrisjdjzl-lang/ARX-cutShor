@@ -1,0 +1,76 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+
+# Environment variables & Secrets (CRITICAL: DO NOT COMMIT)
+.env
+.env.*
+!.env.example
+*secret*.json
+*secrets*.json
+client_secret*.json
+service-account*.json
+service_account*.json
+token.json
+tokens.json
+*.pem
+*.key
+credentials.json
+oauth_*.json
+
+# Database & Local State
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+data/db/
+
+# Video & Media files (Do not store large media in Git)
+*.mp4
+*.mov
+*.mkv
+*.webm
+*.avi
+*.flv
+*.mp3
+*.wav
+*.aac
+*.m4a
+workspace/
+data/workspace/
+data/input/
+data/processing/
+data/ready/
+data/published/
+data/failed/
+data/reports/
+tmp/
+temp/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+tests/fixtures/generated/
+
+# Logs
+*.log
+logs/
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*~
+

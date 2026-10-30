@@ -1,0 +1,40 @@
+name: Config & Security Audit
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+concurrency:
+  group: config-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify no secret files or videos committed
+        run: |
+          if git ls-files | grep -E '(client_secret|service-account|token\.json|tokens\.json|\.env$|\.mp4$|\.mov$|\.mkv$|\.webm$)'; then
+            echo "ERROR: Prohibited secret or video file detected in Git index!"
+            exit 1
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run CLI Audit
+        env:
+          DRY_RUN: "true"
+        run: python -m arx_cutshor.cli audit

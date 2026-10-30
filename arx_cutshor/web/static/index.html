@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ARX-cutShor | منصة أتمتة إنتاج ونشر YouTube Shorts</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-hover: #334155;
+      --primary: #3b82f6;
+      --accent: #f43f5e;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --border: #334155;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      display: flex;
+      min-height: 100vh;
+    }
+    aside {
+      width: 260px;
+      background-color: var(--surface);
+      border-left: 1px solid var(--border);
+      padding: 1.5rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .brand {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .badge {
+      font-size: 0.75rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+      background: var(--warning);
+      color: #000;
+      font-weight: 700;
+    }
+    nav button {
+      width: 100%;
+      text-align: right;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: background 0.2s;
+    }
+    nav button:hover, nav button.active {
+      background: var(--primary);
+      font-weight: 600;
+    }
+    main {
+      flex: 1;
+      padding: 2rem;
+      overflow-y: auto;
+    }
+    .page-section { display: none; }
+    .page-section.active { display: block; }
+    h1 { font-size: 1.6rem; margin-bottom: 1.25rem; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 1.25rem;
+    }
+    .card .label { color: var(--muted); font-size: 0.875rem; }
+    .card .value { font-size: 1.8rem; font-weight: 700; margin-top: 0.35rem; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--surface);
+      border-radius: 0.75rem;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 0.85rem 1rem;
+      text-align: right;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9rem;
+    }
+    th { background: rgba(255,255,255,0.04); color: var(--muted); }
+    .btn {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 0.4rem;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    .btn-danger { background: var(--danger); }
+    .btn-success { background: var(--success); }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; margin-bottom: 0.35rem; color: var(--muted); font-size: 0.9rem; }
+    .form-group input, .form-group select {
+      width: 100%;
+      max-width: 460px;
+      padding: 0.6rem;
+      border-radius: 0.4rem;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+  <aside>
+    <div class="brand">
+      <span>ARX-cutShor</span>
+      <span id="mode-badge" class="badge">DRY_RUN</span>
+    </div>
+    <nav>
+      <button class="active" onclick="showTab('dashboard', this)">لوحة القيادة (Dashboard)</button>
+      <button onclick="showTab('sources', this)">المصادر (Sources)</button>
+      <button onclick="showTab('queue', this)">قائمة المعالجة (Processing Queue)</button>
+      <button onclick="showTab('templates', this)">القوالب والهوية (Templates)</button>
+      <button onclick="showTab('schedule', this)">جدول النشر (Publishing Schedule)</button>
+      <button onclick="showTab('settings', this)">الإعدادات (Settings)</button>
+      <button onclick="showTab('logs', this)">السجلات (Logs)</button>
+    </nav>
+  </aside>
+
+  <main>
+    <!-- 1. Dashboard -->
+    <section id="dashboard" class="page-section active">
+      <h1>لوحة القيادة</h1>
+      <div class="grid">
+        <div class="card"><div class="label">الفيديوهات المكتشفة</div><div class="value" id="stat-discovered">0</div></div>
+        <div class="card"><div class="label">جاري معالجتها</div><div class="value" id="stat-processing">0</div></div>
+        <div class="card"><div class="label">المقاطع الجاهزة</div><div class="value" id="stat-ready">0</div></div>
+        <div class="card"><div class="label">المقاطع المجدولة</div><div class="value" id="stat-scheduled">0</div></div>
+        <div class="card"><div class="label">المقاطع المنشورة</div><div class="value" id="stat-published">0</div></div>
+        <div class="card"><div class="label">المهام الفاشلة</div><div class="value" id="stat-failed">0</div></div>
+      </div>
+      <div class="grid">
+        <div class="card">
+          <div class="label">آخر عملية ناجحة</div>
+          <div id="stat-last-success" style="margin-top:0.5rem;">لا توجد عمليات مسجلة بعد</div>
+        </div>
+        <div class="card">
+          <div class="label">موعد النشر القادم</div>
+          <div id="stat-next-publish" style="margin-top:0.5rem;">غير مجدول</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Sources -->
+    <section id="sources" class="page-section">
+      <h1>مصادر Google Drive</h1>
+      <div class="card" style="margin-bottom:1.5rem;">
+        <p><strong>معرف مجلد الإدخال (Drive Folder ID):</strong> <span id="src-folder-id">-</span></p>
+        <p><strong>حالة الاتصال:</strong> <span id="src-status">-</span></p>
+        <p><strong>آخر عملية فحص:</strong> <span id="src-last-scan">-</span></p>
+        <p><strong>إجمالي الملفات المكتشفة:</strong> <span id="src-total">0</span></p>
+      </div>
+      <table>
+        <thead>
+          <tr><th>#</th><th>اسم الملف</th><th>معرف Drive</th><th>الحجم (بايت)</th><th>الحالة</th><th>حقوق الاستخدام</th></tr>
+        </thead>
+        <tbody id="sources-tbody"></tbody>
+      </table>
+    </section>
+
+    <!-- 3. Processing Queue -->
+    <section id="queue" class="page-section">
+      <h1>قائمة انتظار المعالجة</h1>
+      <table>
+        <thead>
+          <tr><th>#</th><th>اسم الفيديو</th><th>مدة المصدر (ث)</th><th>المقاطع الناتجة</th><th>الحالة</th><th>التقدم</th><th>رسالة الخطأ</th><th>إجراءات</th></tr>
+        </thead>
+        <tbody id="queue-tbody"></tbody>
+      </table>
+    </section>
+
+    <!-- 4. Templates -->
+    <section id="templates" class="page-section">
+      <h1>قالب الفيديو والهوية البصرية</h1>
+      <div class="card">
+        <div class="form-group">
+          <label>مسار الشعار (Logo Path)</label>
+          <input type="text" id="tpl-logo-path" placeholder="data/assets/logo/channel_logo.png" />
+        </div>
+        <div class="form-group">
+          <label>موضع الشعار</label>
+          <select id="tpl-logo-pos">
+            <option value="top-right">أعلى اليمين</option>
+            <option value="top-left">أعلى اليسار</option>
+            <option value="bottom-right">أسفل اليمين</option>
+            <option value="bottom-left">أسفل اليسار</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>عبارة الاشتراك الاختيارية</label>
+          <input type="text" id="tpl-sub-text" value="اشترك بالقناة للمزيد" />
+        </div>
+        <div class="form-group">
+          <label>عبارة التذكير بالإعجاب الاختيارية</label>
+          <input type="text" id="tpl-like-text" value="لا تنسَ الإعجاب بالمقطع" />
+        </div>
+        <div class="form-group">
+          <label>لون الخط وحجمه</label>
+          <input type="text" id="tpl-font-color" value="white" style="max-width:200px;" />
+          <input type="number" id="tpl-font-size" value="42" style="max-width:120px;" />
+        </div>
+        <div class="form-group">
+          <label>الأبعاد المستهدفة (العرض × الارتفاع لـ Shorts)</label>
+          <input type="number" id="tpl-width" value="1080" style="max-width:150px;" /> ×
+          <input type="number" id="tpl-height" value="1920" style="max-width:150px;" />
+        </div>
+        <button class="btn btn-success" onclick="saveTemplate()">حفظ إعدادات القالب</button>
+      </div>
+    </section>
+
+    <!-- 5. Publishing Schedule -->
+    <section id="schedule" class="page-section">
+      <h1>جدول النشر</h1>
+      <div class="card" style="margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <p><strong>حالة الجدول:</strong> <span id="sched-state">نشط</span></p>
+          <p><strong>المنطقة الزمنية:</strong> <span id="sched-tz">Asia/Riyadh</span> | <strong>الحد اليومي:</strong> <span id="sched-limit">3</span> مقاطع</p>
+        </div>
+        <div>
+          <button class="btn btn-danger" onclick="toggleSchedule('pause')">إيقاف مؤقت</button>
+          <button class="btn btn-success" onclick="toggleSchedule('resume')">استئناف الجدول</button>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr><th>#</th><th>العنوان</th><th>الجزء</th><th>موعد النشر</th><th>الخصوصية</th><th>حالة النشر</th><th>الرابط</th></tr>
+        </thead>
+        <tbody id="schedule-tbody"></tbody>
+      </table>
+    </section>
+
+    <!-- 6. Settings -->
+    <section id="settings" class="page-section">
+      <h1>إعدادات النظام والخدمات</h1>
+      <div class="card">
+        <div class="form-group">
+          <label>وضع النشر (Testing / Scheduled)</label>
+          <select id="set-pub-mode">
+            <option value="testing">وضع الاختبار الآمن (Private / Unlisted Testing)</option>
+            <option value="scheduled">النشر المجدول (Scheduled Publishing)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>المنطقة الزمنية</label>
+          <input type="text" id="set-timezone" value="Asia/Riyadh" />
+        </div>
+        <div class="form-group">
+          <label>وضع تقسيم الفيديو (Fixed / Scene / Manual / Hybrid)</label>
+          <select id="set-split-mode">
+            <option value="fixed">مدة ثابتة (Fixed Duration)</option>
+            <option value="scene">حسب المشاهد (Scene-Based)</option>
+            <option value="hybrid">هجين (Hybrid)</option>
+            <option value="manual">نقاط يدوية (Manual Markers)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>المدة المستهدفة للمقطع (ثانية)</label>
+          <input type="number" id="set-target-dur" value="55" />
+        </div>
+        <button class="btn btn-success" onclick="saveSettings()">حفظ الإعدادات</button>
+      </div>
+    </section>
+
+    <!-- 7. Logs -->
+    <section id="logs" class="page-section">
+      <h1>سجل العمليات والأخطاء (محمي من تسريب الأسرار)</h1>
+      <table>
+        <thead>
+          <tr><th>الوقت</th><th>نوع العملية</th><th>المعرف</th><th>الحالة</th><th>الرسالة</th></tr>
+        </thead>
+        <tbody id="logs-tbody"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    function showTab(tabId, btn) {
+      document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      if (btn) btn.classList.add('active');
+      refreshAll();
+    }
+
+    async function refreshAll() {
+      try {
+        const dash = await (await fetch('/api/dashboard')).json();
+        document.getElementById('stat-discovered').textContent = dash.discovered_videos;
+        document.getElementById('stat-processing').textContent = dash.processing_videos;
+        document.getElementById('stat-ready').textContent = dash.ready_clips;
+        document.getElementById('stat-scheduled').textContent = dash.scheduled_clips;
+        document.getElementById('stat-published').textContent = dash.published_clips;
+        document.getElementById('stat-failed').textContent = dash.failed_tasks;
+        document.getElementById('mode-badge').textContent = dash.dry_run ? 'DRY_RUN' : dash.publishing_mode;
+        if (dash.last_successful_operation) {
+          document.getElementById('stat-last-success').textContent =
+            dash.last_successful_operation.operation_type + ' (' + dash.last_successful_operation.created_at + ')';
+        }
+        document.getElementById('stat-next-publish').textContent = dash.next_scheduled_publish || 'غير مجدول';
+
+        const src = await (await fetch('/api/sources')).json();
+        document.getElementById('src-folder-id').textContent = src.input_folder_id;
+        document.getElementById('src-status').textContent = src.gdrive_enabled ? 'مفعل' : 'وضع محلي / غير مربوط بعد';
+        document.getElementById('src-last-scan').textContent = src.last_scan;
+        document.getElementById('src-total').textContent = src.total_discovered;
+        document.getElementById('sources-tbody').innerHTML = src.files.map(f =>
+          `<tr><td>${f.id}</td><td>${f.filename}</td><td>${f.drive_file_id}</td><td>${f.size_bytes}</td><td>${f.status}</td><td>${f.rights_status}</td></tr>`
+        ).join('');
+
+        const q = await (await fetch('/api/queue')).json();
+        document.getElementById('queue-tbody').innerHTML = q.queue.map(item =>
+          `<tr>
+            <td>${item.id}</td>
+            <td>${item.filename}</td>
+            <td>${item.duration_seconds}</td>
+            <td>${item.clips_count}</td>
+            <td>${item.status}</td>
+            <td>${item.progress_percent}%</td>
+            <td>${item.error_message || '-'}</td>
+            <td>
+              <button class="btn" onclick="retryVideo(${item.id})">إعادة محاولة</button>
+              <button class="btn btn-danger" onclick="cancelVideo(${item.id})">إلغاء</button>
+            </td>
+          </tr>`
+        ).join('');
+
+        const sched = await (await fetch('/api/schedule')).json();
+        document.getElementById('sched-state').textContent = sched.paused ? 'متوقف مؤقتاً' : 'نشط';
+        document.getElementById('sched-tz').textContent = sched.timezone;
+        document.getElementById('sched-limit').textContent = sched.daily_clip_limit;
+        document.getElementById('schedule-tbody').innerHTML = sched.jobs.map(j =>
+          `<tr>
+            <td>${j.id}</td>
+            <td>${j.title || j.output_filename}</td>
+            <td>${j.sequence_number}/${j.total_parts}</td>
+            <td>${j.scheduled_at}</td>
+            <td>${j.privacy_status}</td>
+            <td>${j.status}</td>
+            <td>${j.youtube_url ? `<a href="${j.youtube_url}" target="_blank" style="color:#3b82f6;">رابط</a>` : '-'}</td>
+          </tr>`
+        ).join('');
+
+        const logs = await (await fetch('/api/logs')).json();
+        document.getElementById('logs-tbody').innerHTML = logs.logs.map(l =>
+          `<tr><td>${l.created_at}</td><td>${l.operation_type}</td><td>${l.entity_id || '-'}</td><td>${l.status}</td><td>${l.message}</td></tr>`
+        ).join('');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function retryVideo(id) {
+      await fetch(`/api/queue/${id}/retry`, { method: 'POST' });
+      refreshAll();
+    }
+
+    async function cancelVideo(id) {
+      await fetch(`/api/queue/${id}/cancel`, { method: 'POST' });
+      refreshAll();
+    }
+
+    async function toggleSchedule(action) {
+      await fetch(`/api/schedule/${action}`, { method: 'POST' });
+      refreshAll();
+    }
+
+    async function saveTemplate() {
+      const payload = {
+        name: 'default',
+        configuration: {
+          logo_path: document.getElementById('tpl-logo-path').value,
+          logo_position: document.getElementById('tpl-logo-pos').value,
+          subscribe_text: document.getElementById('tpl-sub-text').value,
+          like_text: document.getElementById('tpl-like-text').value,
+          font_color: document.getElementById('tpl-font-color').value,
+          font_size: parseInt(document.getElementById('tpl-font-size').value, 10),
+          target_width: parseInt(document.getElementById('tpl-width').value, 10),
+          target_height: parseInt(document.getElementById('tpl-height').value, 10)
+        }
+      };
+      await fetch('/api/templates', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+      });
+      refreshAll();
+    }
+
+    async function saveSettings() {
+      const payload = {
+        publishing_mode: document.getElementById('set-pub-mode').value,
+        timezone: document.getElementById('set-timezone').value,
+        split_mode: document.getElementById('set-split-mode').value,
+        target_clip_duration_sec: document.getElementById('set-target-dur').value
+      };
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+      });
+      refreshAll();
+    }
+
+    refreshAll();
+  </script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+name: Process Small Queue
+
+on:
+  schedule:
+    - cron: "45 */8 * * *"
+  workflow_dispatch:
+    inputs:
+      max_videos:
+        description: "Maximum videos to process in this run"
+        required: false
+        default: "1"
+
+concurrency:
+  group: arx-pipeline-shared-state
+  cancel-in-progress: false
+
+jobs:
+  process-queue:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Provision OAuth tokens from GitHub Secrets
+        env:
+          GDRIVE_TOKEN_JSON: ${{ secrets.GDRIVE_TOKEN_JSON }}
+          YOUTUBE_TOKEN_JSON: ${{ secrets.YOUTUBE_TOKEN_JSON }}
+        run: |
+          mkdir -p credentials
+          if [ -n "$GDRIVE_TOKEN_JSON" ]; then
+            printf '%s' "$GDRIVE_TOKEN_JSON" > credentials/gdrive_token.json
+          fi
+          if [ -n "$YOUTUBE_TOKEN_JSON" ]; then
+            printf '%s' "$YOUTUBE_TOKEN_JSON" > credentials/youtube_token.json
+          fi
+
+      - name: Run bounded pipeline cycle
+        env:
+          DRY_RUN: ${{ vars.DRY_RUN || 'true' }}
+          PUBLISHING_MODE: ${{ vars.PUBLISHING_MODE || 'testing' }}
+          ALLOW_PUBLIC_PUBLISHING: ${{ vars.ALLOW_PUBLIC_PUBLISHING || 'false' }}
+          GDRIVE_ENABLED: ${{ vars.GDRIVE_ENABLED || 'false' }}
+          YOUTUBE_ENABLED: ${{ vars.YOUTUBE_ENABLED || 'false' }}
+          GDRIVE_INPUT_FOLDER_ID: ${{ secrets.GDRIVE_INPUT_FOLDER_ID }}
+        run: |
+          python -m arx_cutshor.cli run-cycle --max-videos ${{ github.event.inputs.max_videos || '1' }}
+
+      - name: Upload execution report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arx-execution-reports-${{ github.run_id }}
+          path: data/reports/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Clean up ephemeral credentials & media
+        if: always()
+        run: |
+          rm -rf credentials/
+          rm -rf data/workspace/

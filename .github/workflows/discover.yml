@@ -1,0 +1,54 @@
+name: Discover New Videos
+
+on:
+  schedule:
+    - cron: "15 */6 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: arx-pipeline-shared-state
+  cancel-in-progress: false
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Provision OAuth credentials from Secrets (if configured)
+        env:
+          GDRIVE_TOKEN_JSON: ${{ secrets.GDRIVE_TOKEN_JSON }}
+        run: |
+          mkdir -p credentials
+          if [ -n "$GDRIVE_TOKEN_JSON" ]; then
+            printf '%s' "$GDRIVE_TOKEN_JSON" > credentials/gdrive_token.json
+          fi
+
+      - name: Discover files (safe mode if folder ID not set)
+        env:
+          DRY_RUN: ${{ vars.DRY_RUN || 'true' }}
+          GDRIVE_ENABLED: ${{ vars.GDRIVE_ENABLED || 'false' }}
+          GDRIVE_INPUT_FOLDER_ID: ${{ secrets.GDRIVE_INPUT_FOLDER_ID }}
+        run: |
+          if [ -n "$GDRIVE_INPUT_FOLDER_ID" ] && [ -f "credentials/gdrive_token.json" ]; then
+            python -m arx_cutshor.cli discover --folder-id "$GDRIVE_INPUT_FOLDER_ID"
+          else
+            echo "Skipping live Google Drive poll: GDRIVE_INPUT_FOLDER_ID or GDRIVE_TOKEN_JSON not configured in Secrets."
+            python -m arx_cutshor.cli audit
+          fi
+
+      - name: Clean up ephemeral credentials
+        if: always()
+        run: rm -rf credentials/

@@ -1,0 +1,23 @@
+# Core dependencies for ARX-cutShor
+fastapi>=0.110.0
+uvicorn>=0.29.0
+pydantic>=2.7.0
+python-dotenv>=1.0.1
+python-multipart>=0.0.9
+httpx>=0.27.0
+pillow>=10.0.0
+
+# Google Drive & YouTube Data API v3
+google-api-python-client>=2.120.0
+google-auth-httplib2>=0.2.0
+google-auth-oauthlib>=1.2.0
+
+# Arabic text shaping & RTL support for FFmpeg drawtext
+arabic-reshaper>=3.0.0
+python-bidi>=0.4.2
+
+# Self-contained FFmpeg binary provider
+imageio-ffmpeg>=0.5.1
+
+# Testing
+pytest>=8.0.0
