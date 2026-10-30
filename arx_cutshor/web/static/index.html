@@ -404,10 +404,12 @@
     }
 
     async function saveTemplate() {
+      const logoVal = document.getElementById('tpl-logo-path').value.trim();
       const payload = {
         name: 'default',
         configuration: {
-          logo_path: document.getElementById('tpl-logo-path').value,
+          logo_enabled: Boolean(logoVal),
+          logo_path: logoVal,
           logo_position: document.getElementById('tpl-logo-pos').value,
           subscribe_text: document.getElementById('tpl-sub-text').value,
           like_text: document.getElementById('tpl-like-text').value,

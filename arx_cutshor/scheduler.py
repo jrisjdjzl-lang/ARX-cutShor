@@ -191,6 +191,9 @@ class SchedulerEngine:
             return []
 
         slots = self.calculate_next_slots(len(unscheduled_clips), reference_time=reference_time)
+        if self.publishing_mode == "public" and self.allow_public_publishing and not self.dry_run and slots:
+            # Immediate direct publishing mode: schedule first clip for immediate upload now
+            slots[0] = (reference_time or datetime.now(timezone.utc)).astimezone(self.tz)
         created_jobs: List[Dict[str, Any]] = []
 
         for clip, slot_dt in zip(unscheduled_clips, slots):

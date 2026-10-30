@@ -87,10 +87,12 @@ def shape_arabic_text(text: str) -> str:
 
 def _escape_ffmpeg_drawtext(text: str) -> str:
     """Escape special characters for FFmpeg drawtext filter."""
-    escaped = text.replace("\\", "\\\\")
+    # Replace ASCII single quote with typographic apostrophe to prevent breaking single-quoted filter strings
+    escaped = text.replace("'", "’").replace('"', "”")
+    escaped = escaped.replace("\\", "\\\\")
     escaped = escaped.replace(":", "\\:")
-    escaped = escaped.replace("'", "\\'")
     escaped = escaped.replace("%", "\\%")
+    escaped = escaped.replace(";", " ").replace(",", " ")
     return escaped
 
 
@@ -571,7 +573,15 @@ class VideoEngine:
                 "-c:v",
                 "libx264",
                 "-preset",
-                "ultrafast",
+                "veryfast",
+                "-r",
+                "30",
+                "-crf",
+                "26",
+                "-maxrate",
+                "2.5M",
+                "-bufsize",
+                "5M",
                 "-pix_fmt",
                 "yuv420p",
                 "-c:a",

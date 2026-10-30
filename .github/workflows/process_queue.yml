@@ -2,7 +2,7 @@ name: Process Small Queue
 
 on:
   schedule:
-    - cron: "45 */8 * * *"
+    - cron: "*/15 * * * *"
   workflow_dispatch:
     inputs:
       max_videos:
@@ -52,14 +52,20 @@ jobs:
 
       - name: Run bounded pipeline cycle
         env:
-          DRY_RUN: ${{ vars.DRY_RUN || 'true' }}
-          PUBLISHING_MODE: ${{ vars.PUBLISHING_MODE || 'testing' }}
-          ALLOW_PUBLIC_PUBLISHING: ${{ vars.ALLOW_PUBLIC_PUBLISHING || 'false' }}
-          GDRIVE_ENABLED: ${{ vars.GDRIVE_ENABLED || 'false' }}
-          YOUTUBE_ENABLED: ${{ vars.YOUTUBE_ENABLED || 'false' }}
-          GDRIVE_INPUT_FOLDER_ID: ${{ secrets.GDRIVE_INPUT_FOLDER_ID }}
+          DRY_RUN: ${{ vars.DRY_RUN || 'false' }}
+          PUBLISHING_MODE: ${{ vars.PUBLISHING_MODE || 'public' }}
+          ALLOW_PUBLIC_PUBLISHING: ${{ vars.ALLOW_PUBLIC_PUBLISHING || 'true' }}
+          YOUTUBE_DEFAULT_PRIVACY: ${{ vars.YOUTUBE_DEFAULT_PRIVACY || 'public' }}
+          GDRIVE_ENABLED: ${{ vars.GDRIVE_ENABLED || 'true' }}
+          YOUTUBE_ENABLED: ${{ vars.YOUTUBE_ENABLED || 'true' }}
+          GDRIVE_INPUT_FOLDER_ID: ${{ secrets.GDRIVE_INPUT_FOLDER_ID || '1PpqxWIN3cDRQ90nmT7bWIRKokJj_5vFf' }}
         run: |
-          python -m arx_cutshor.cli run-cycle --max-videos ${{ github.event.inputs.max_videos || '1' }}
+          if [ -f "credentials/gdrive_token.json" ] && [ -f "credentials/youtube_token.json" ]; then
+            python -m arx_cutshor.cli run-cycle --max-videos ${{ github.event.inputs.max_videos || '1' }}
+          else
+            echo "OAuth tokens not yet configured in GitHub Secrets; running safe dry-run cycle."
+            DRY_RUN=true GDRIVE_ENABLED=false YOUTUBE_ENABLED=false python -m arx_cutshor.cli run-cycle --max-videos 1
+          fi
 
       - name: Upload execution report artifact
         if: always()

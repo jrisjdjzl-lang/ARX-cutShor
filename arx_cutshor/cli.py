@@ -141,6 +141,8 @@ def cmd_maintenance(args) -> int:
 
 
 def cmd_serve(args) -> int:
+    import threading
+    import time
     import uvicorn
     from arx_cutshor.web_app import create_app
 
@@ -148,7 +150,43 @@ def cmd_serve(args) -> int:
     host = args.host or cfg.web_host
     port = int(args.port or cfg.web_port)
     app = create_app(cfg)
+
+    if not getattr(args, "no_watch", False):
+        def _auto_watcher():
+            while True:
+                try:
+                    orch = PipelineOrchestrator(load_config())
+                    orch.run_cycle(max_videos=2)
+                except Exception as exc:
+                    print(f"[Auto-Watcher] Warning: {exc}", file=sys.stderr)
+                time.sleep(45)
+
+        t = threading.Thread(target=_auto_watcher, daemon=True)
+        t.start()
+        print("🚀 [Auto-Watcher] المراقب التلقائي يعمل في الخلفية (يفحص Google Drive ويرفع تلقائياً كل 45 ثانية)")
+
     uvicorn.run(app, host=host, port=port)
+    return 0
+
+
+def cmd_watch(args) -> int:
+    import time
+
+    interval = max(15, int(args.interval))
+    print(f"🚀 بدء المراقبة التلقائية المستمرة لمجلد Google Drive كل {interval} ثانية...")
+    while True:
+        try:
+            cfg = load_config()
+            orch = PipelineOrchestrator(cfg)
+            report = orch.run_cycle(max_videos=args.max_videos)
+            if report.get("newly_discovered") or report.get("processed_videos") or report.get("executed_publishing_jobs"):
+                print(json.dumps(report, indent=2, ensure_ascii=False))
+        except KeyboardInterrupt:
+            print("\nتم إيقاف المراقب التلقائي.")
+            break
+        except Exception as exc:
+            print(f"[Auto-Watcher Error] {exc}", file=sys.stderr)
+        time.sleep(interval)
     return 0
 
 
@@ -209,9 +247,14 @@ def main(argv=None) -> int:
     p_maint = sub.add_parser("maintenance", help="Recover interrupted jobs, clean temp files, and backup DB")
     p_maint.add_argument("--max-age", type=int, default=3600, help="Max temp file age in seconds")
 
-    p_serve = sub.add_parser("serve", help="Start local RTL Arabic Management Web UI")
+    p_serve = sub.add_parser("serve", help="Start local RTL Arabic Management Web UI + Auto-Watcher")
     p_serve.add_argument("--host", default="127.0.0.1")
     p_serve.add_argument("--port", type=int, default=8000)
+    p_serve.add_argument("--no-watch", action="store_true", help="Disable background Google Drive watcher")
+
+    p_watch = sub.add_parser("watch", help="Continuously watch Google Drive, process, and upload to YouTube")
+    p_watch.add_argument("--interval", type=int, default=45, help="Poll interval in seconds")
+    p_watch.add_argument("--max-videos", type=int, default=2, help="Max videos per cycle")
 
     args = parser.parse_args(argv)
     dispatch = {
@@ -224,6 +267,7 @@ def main(argv=None) -> int:
         "report": cmd_report,
         "maintenance": cmd_maintenance,
         "serve": cmd_serve,
+        "watch": cmd_watch,
     }
     return dispatch[args.command](args)
 

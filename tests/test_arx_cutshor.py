@@ -55,6 +55,8 @@ def temp_env(tmp_path: Path):
         dry_run=True,
         publishing_mode="testing",
         allow_public_publishing=False,
+        gdrive_enabled=False,
+        youtube_enabled=False,
         database_path=tmp_path / "data" / "db" / "test.db",
         workspace_dir=tmp_path / "data" / "workspace",
         assets_dir=tmp_path / "data" / "assets",
