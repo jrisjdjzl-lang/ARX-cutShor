@@ -13,11 +13,13 @@ ENV/
 .env
 .env.*
 !.env.example
+credentials/
 *secret*.json
 *secrets*.json
 client_secret*.json
 service-account*.json
 service_account*.json
+*token*.json
 token.json
 tokens.json
 *.pem
