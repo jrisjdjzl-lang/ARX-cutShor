@@ -149,7 +149,13 @@
   <main>
     <!-- 1. Dashboard -->
     <section id="dashboard" class="page-section active">
-      <h1>لوحة القيادة</h1>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+        <h1>لوحة القيادة</h1>
+        <div style="display:flex; gap:0.75rem;">
+          <button class="btn" id="btn-scan" onclick="triggerScanDrive()" style="background:#475569; padding:0.6rem 1.2rem;">🔍 فحص Google Drive</button>
+          <button class="btn btn-success" id="btn-run-cycle" onclick="triggerRunCycle()" style="padding:0.6rem 1.2rem; font-weight:700;">🔄 تشغيل دورة المعالجة والرفع الآن</button>
+        </div>
+      </div>
       <div class="grid">
         <div class="card"><div class="label">الفيديوهات المكتشفة</div><div class="value" id="stat-discovered">0</div></div>
         <div class="card"><div class="label">جاري معالجتها</div><div class="value" id="stat-processing">0</div></div>
@@ -172,7 +178,10 @@
 
     <!-- 2. Sources -->
     <section id="sources" class="page-section">
-      <h1>مصادر Google Drive</h1>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+        <h1>مصادر Google Drive</h1>
+        <button class="btn btn-success" onclick="triggerScanDrive()">🔍 فحص مجلد Google Drive الآن وتحديث القائمة</button>
+      </div>
       <div class="card" style="margin-bottom:1.5rem;">
         <p><strong>معرف مجلد الإدخال (Drive Folder ID):</strong> <span id="src-folder-id">-</span></p>
         <p><strong>حالة الاتصال:</strong> <span id="src-status">-</span></p>
@@ -252,7 +261,7 @@
       </div>
       <table>
         <thead>
-          <tr><th>#</th><th>العنوان</th><th>الجزء</th><th>موعد النشر</th><th>الخصوصية</th><th>حالة النشر</th><th>الرابط</th></tr>
+          <tr><th>#</th><th>العنوان</th><th>الجزء</th><th>موعد النشر</th><th>الخصوصية</th><th>حالة النشر</th><th>الرابط</th><th>معاينة الفيديو</th></tr>
         </thead>
         <tbody id="schedule-tbody"></tbody>
       </table>
@@ -366,6 +375,7 @@
             <td>${j.privacy_status}</td>
             <td>${j.status}</td>
             <td>${j.youtube_url ? `<a href="${j.youtube_url}" target="_blank" style="color:#3b82f6;">رابط</a>` : '-'}</td>
+            <td><button class="btn btn-success" onclick="previewClip(${j.clip_id}, '${(j.title || '').replace(/'/g, "\\'")}')">🎬 تشغيل ومعاينة</button></td>
           </tr>`
         ).join('');
 
@@ -430,8 +440,69 @@
       refreshAll();
     }
 
+    async function triggerScanDrive() {
+      const btn = document.getElementById('btn-scan');
+      if (btn) btn.textContent = 'جاري الفحص...';
+      try {
+        const res = await (await fetch('/api/sources/scan', { method: 'POST' })).json();
+        alert(`اكتمل الفحص بنجاح! تم العثور على ${res.new_count || 0} فيديو جديد.`);
+      } catch (e) {
+        alert('حدث خطأ أثناء فحص Google Drive: ' + e);
+      } finally {
+        if (btn) btn.textContent = '🔍 فحص Google Drive';
+        refreshAll();
+      }
+    }
+
+    async function triggerRunCycle() {
+      const btn = document.getElementById('btn-run-cycle');
+      if (btn) { btn.disabled = true; btn.textContent = '⏳ جاري المعالجة والرفع...'; }
+      try {
+        const res = await (await fetch('/api/run-cycle', { method: 'POST' })).json();
+        alert('اكتملت دورة المعالجة والرفع بنجاح! تم تجهيز المقاطع وتحديث الجدول.');
+      } catch (e) {
+        alert('حدث خطأ أثناء المعالجة: ' + e);
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = '🔄 تشغيل دورة المعالجة والرفع الآن'; }
+        refreshAll();
+      }
+    }
+
+    function previewClip(clipId, title) {
+      const modal = document.getElementById('video-modal');
+      const player = document.getElementById('modal-video-player');
+      const titleEl = document.getElementById('modal-video-title');
+      if (modal && player) {
+        titleEl.textContent = title || 'معاينة المقطع';
+        player.src = `/api/clips/${clipId}/stream`;
+        modal.style.display = 'flex';
+        player.play();
+      }
+    }
+
+    function closeVideoModal() {
+      const modal = document.getElementById('video-modal');
+      const player = document.getElementById('modal-video-player');
+      if (modal && player) {
+        player.pause();
+        player.src = '';
+        modal.style.display = 'none';
+      }
+    }
+
     refreshAll();
   </script>
+
+  <!-- Video Preview Modal -->
+  <div id="video-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; justify-content:center; align-items:center;">
+    <div style="background:var(--surface); border-radius:0.75rem; padding:1.5rem; max-width:440px; width:92%; text-align:center; position:relative; box-shadow:0 10px 25px rgba(0,0,0,0.5);">
+      <h3 id="modal-video-title" style="margin-bottom:1rem; font-size:1.1rem; color:var(--text);">معاينة المقطع</h3>
+      <video id="modal-video-player" controls style="width:100%; max-height:580px; border-radius:0.5rem; background:#000; outline:none;"></video>
+      <div style="margin-top:1rem;">
+        <button class="btn btn-danger" onclick="closeVideoModal()" style="padding:0.6rem 2rem; font-weight:600;">إغلاق المعاينة</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
 

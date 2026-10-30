@@ -27,7 +27,7 @@ STATIC_DIR = Path(__file__).resolve().parent / "web" / "static"
 def create_app(config: Optional[AppConfig] = None, db: Optional[Database] = None):
     """Create the FastAPI application for ARX-cutShor Management UI."""
     from fastapi import Depends, FastAPI, Header, HTTPException, Request
-    from fastapi.responses import HTMLResponse, JSONResponse
+    from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
     from fastapi.staticfiles import StaticFiles
 
     cfg = config or load_config()
@@ -77,6 +77,24 @@ def create_app(config: Optional[AppConfig] = None, db: Optional[Database] = None
             "total_discovered": len(videos),
             "files": videos,
         }
+
+    @app.post("/api/sources/scan")
+    def api_scan_sources(auth: bool = Depends(verify_local_auth)):
+        if not cfg.gdrive_enabled or not cfg.gdrive_input_folder_id:
+            raise HTTPException(status_code=400, detail="Google Drive غير مفعل أو معرف المجلد غير محدد")
+        try:
+            discovered = orchestrator.gdrive.discover_new_videos()
+            return {"status": "success", "new_count": len(discovered), "videos": discovered}
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=str(exc))
+
+    @app.post("/api/run-cycle")
+    def api_run_cycle(auth: bool = Depends(verify_local_auth)):
+        try:
+            report = orchestrator.run_cycle(max_videos=5)
+            return {"status": "success", "report": report}
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=str(exc))
 
     @app.get("/api/queue")
     def api_processing_queue(auth: bool = Depends(verify_local_auth)):
@@ -129,6 +147,16 @@ def create_app(config: Optional[AppConfig] = None, db: Optional[Database] = None
         database.save_template(name, config_data)
         database.log_operation("template_update", "success", f"تم تحديث قالب الهوية البصرية '{name}'", name)
         return {"status": "saved", "template": database.get_template(name)}
+
+    @app.get("/api/clips/{clip_id}/stream")
+    def api_stream_clip(clip_id: int, auth: bool = Depends(verify_local_auth)):
+        clip = database.get_clip(clip_id)
+        if not clip:
+            raise HTTPException(status_code=404, detail="المقطع غير موجود")
+        fpath = Path(clip["output_filename"])
+        if not fpath.exists():
+            raise HTTPException(status_code=404, detail="ملف الفيديو غير موجود على القرص")
+        return FileResponse(str(fpath), media_type="video/mp4")
 
     @app.get("/api/schedule")
     def api_get_schedule(auth: bool = Depends(verify_local_auth)):
