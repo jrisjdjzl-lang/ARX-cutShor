@@ -22,6 +22,8 @@ from arx_cutshor.database import Database
 from arx_cutshor.security import safe_resolve_path, sanitize_filename, scrub_secrets
 from arx_cutshor.video_engine import SUPPORTED_EXTENSIONS
 
+TupleResult = Any
+
 # Least-privilege scopes: read files in specified Drive folders and manage app-created files/folders
 GDRIVE_SCOPES = [
     "https://www.googleapis.com/auth/drive.readonly",
